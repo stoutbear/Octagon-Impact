@@ -1,0 +1,1174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OctagonImpact | Data-Driven Fighter Impact Scores</title>
+<meta name="description" content="Octagon Impact Score (OIS) — the premier data-driven fighter grading system for UFC/MMA. Striking • Wrestling • Ground impact scores powered by UFCStats.com data.">
+<meta property="og:title" content="OctagonImpact | Measure True Fighter Impact">
+<meta property="og:description" content="Data-driven fighter impact scores for UFC/MMA. Striking • Wrestling • Ground.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@300;400;500;600&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  :root {
+    --black: #080a0c;
+    --black2: #0d0f12;
+    --surface: #111418;
+    --surface2: #181c22;
+    --surface3: #1e232c;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.12);
+    --red: #c0122c;
+    --red-glow: #e01535;
+    --red-dim: rgba(192,18,44,0.15);
+    --cyan: #00d4ff;
+    --cyan-dim: rgba(0,212,255,0.12);
+    --gold: #f5c842;
+    --green: #4ade80;
+    --text: #e8eaed;
+    --text2: #9aa0aa;
+    --text3: #5a6170;
+    --mono: 'Share Tech Mono', monospace;
+    --display: 'Barlow Condensed', sans-serif;
+    --body: 'Barlow', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--black);
+    color: var(--text);
+    font-family: var(--body);
+    font-size: 16px;
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,212,255,0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,212,255,0.025) 1px, transparent 1px);
+    background-size: 60px 60px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: rgba(8,10,12,0.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 2rem; height: 64px;
+  }
+  .nav-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+  .nav-logo-text { font-family: var(--display); font-weight: 900; font-size: 1.5rem; letter-spacing: .04em; color: var(--text); }
+  .nav-logo-text span { color: var(--red-glow); }
+  .nav-links { display: flex; gap: 0; list-style: none; }
+  .nav-links a {
+    display: block; padding: 0 1.1rem; height: 64px; line-height: 64px;
+    font-family: var(--display); font-weight: 600; font-size: .85rem;
+    letter-spacing: .1em; text-transform: uppercase; color: var(--text2);
+    text-decoration: none; border-bottom: 2px solid transparent;
+    transition: color .2s, border-color .2s;
+  }
+  .nav-links a:hover, .nav-links a.active { color: var(--cyan); border-color: var(--cyan); }
+  .nav-cta { background: var(--red) !important; color: #fff !important; border-bottom: 2px solid var(--red) !important; border-radius: 3px; margin-left: .5rem; }
+  .nav-cta:hover { background: var(--red-glow) !important; }
+  .nav-toggle { display: none; background: none; border: none; color: var(--text); font-size: 1.5rem; cursor: pointer; }
+  .mobile-menu { display: none; position: fixed; top: 64px; left: 0; right: 0; background: rgba(8,10,12,.97); border-bottom: 1px solid var(--border); z-index: 99; flex-direction: column; padding: 1rem 0; }
+  .mobile-menu.open { display: flex; }
+  .mobile-menu a { padding: .8rem 2rem; font-family: var(--display); font-weight: 600; font-size: 1rem; letter-spacing: .08em; text-transform: uppercase; color: var(--text2); text-decoration: none; border-left: 3px solid transparent; transition: color .15s, border-color .15s; }
+  .mobile-menu a:hover { color: var(--cyan); border-color: var(--cyan); }
+
+  /* ── SECTIONS ── */
+  section { position: relative; z-index: 1; }
+
+  /* ── HERO ── */
+  #home { min-height: 100vh; display: flex; flex-direction: column; justify-content: center; padding: 100px 2rem 4rem; overflow: hidden; }
+  .hero-bg-octagon { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%) rotate(22.5deg); width: 700px; height: 700px; border: 1px solid rgba(0,212,255,.06); clip-path: polygon(30% 0%,70% 0%,100% 30%,100% 70%,70% 100%,30% 100%,0% 70%,0% 30%); background: radial-gradient(circle at center, rgba(0,212,255,.03) 0%, transparent 70%); animation: pulse-oct 4s ease-in-out infinite; }
+  .hero-bg-octagon2 { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%) rotate(22.5deg); width: 900px; height: 900px; border: 1px solid rgba(192,18,44,.04); clip-path: polygon(30% 0%,70% 0%,100% 30%,100% 70%,70% 100%,30% 100%,0% 70%,0% 30%); animation: pulse-oct 4s ease-in-out infinite reverse; }
+  @keyframes pulse-oct { 0%,100% { opacity:.6; transform:translate(-50%,-50%) rotate(22.5deg) scale(1); } 50% { opacity:1; transform:translate(-50%,-50%) rotate(22.5deg) scale(1.02); } }
+  .hero-content { max-width: 900px; margin: 0 auto; text-align: center; }
+  .hero-eyebrow { font-family: var(--mono); font-size: .78rem; letter-spacing: .2em; color: var(--cyan); text-transform: uppercase; margin-bottom: 1.2rem; display: flex; align-items: center; justify-content: center; gap: .6rem; }
+  .hero-eyebrow::before, .hero-eyebrow::after { content:''; display:block; width:40px; height:1px; background:var(--cyan); opacity:.5; }
+  h1.hero-title { font-family: var(--display); font-weight: 900; font-size: clamp(3.5rem,10vw,7rem); line-height: .95; letter-spacing: -.01em; text-transform: uppercase; margin-bottom: .5rem; }
+  h1.hero-title .accent { color: var(--red-glow); }
+  h1.hero-title .accent2 { color: var(--cyan); }
+  .hero-sub { font-size: 1.05rem; color: var(--text2); max-width: 560px; margin: 1.2rem auto 2.2rem; line-height: 1.7; }
+  .hero-btns { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; margin-bottom: 3rem; }
+  .btn-primary { background: var(--red); color: #fff; font-family: var(--display); font-weight: 700; font-size: .9rem; letter-spacing: .12em; text-transform: uppercase; padding: .9rem 2rem; border: none; border-radius: 3px; cursor: pointer; text-decoration: none; display: inline-block; transition: background .2s, transform .15s; }
+  .btn-primary:hover { background: var(--red-glow); transform: translateY(-1px); }
+  .btn-outline { background: transparent; color: var(--cyan); font-family: var(--display); font-weight: 700; font-size: .9rem; letter-spacing: .12em; text-transform: uppercase; padding: .9rem 2rem; border: 1px solid var(--cyan); border-radius: 3px; cursor: pointer; text-decoration: none; display: inline-block; transition: background .2s, transform .15s; }
+  .btn-outline:hover { background: var(--cyan-dim); transform: translateY(-1px); }
+  .btn-compare { background: transparent; color: var(--gold); font-family: var(--display); font-weight: 700; font-size: .75rem; letter-spacing: .1em; text-transform: uppercase; padding: .5rem 1rem; border: 1px solid rgba(245,200,66,.4); border-radius: 3px; cursor: pointer; transition: background .2s; white-space: nowrap; }
+  .btn-compare:hover { background: rgba(245,200,66,.1); }
+  .btn-compare.selected { background: rgba(245,200,66,.15); border-color: var(--gold); color: var(--gold); }
+
+  /* ── MINI CARDS ── */
+  .hero-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px,1fr)); gap: 1rem; max-width: 900px; margin: 0 auto; }
+  .fighter-card-mini { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 1.2rem; text-align: left; position: relative; overflow: hidden; cursor: pointer; transition: border-color .2s, transform .2s; }
+  .fighter-card-mini::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:var(--red); }
+  .fighter-card-mini:hover { border-color: var(--border2); transform: translateY(-2px); }
+  .card-division { font-family: var(--mono); font-size: .65rem; color: var(--text3); letter-spacing: .1em; text-transform: uppercase; margin-bottom: .4rem; }
+  .card-name { font-family: var(--display); font-weight: 700; font-size: 1.1rem; letter-spacing: .03em; margin-bottom: .8rem; }
+  .card-ois { font-family: var(--display); font-weight: 900; font-size: 2.8rem; line-height: 1; color: var(--red-glow); margin-bottom: .6rem; }
+  .card-ois-label { font-family: var(--mono); font-size: .6rem; letter-spacing: .12em; color: var(--text3); text-transform: uppercase; margin-bottom: .8rem; }
+  .card-facets { display: flex; flex-direction: column; gap: .3rem; }
+  .facet-row { display: flex; align-items: center; gap: .5rem; font-size: .75rem; }
+  .facet-label { font-family: var(--mono); color: var(--text3); width: 20px; font-size: .65rem; letter-spacing: .05em; }
+  .facet-bar { flex: 1; height: 4px; background: var(--surface2); border-radius: 2px; overflow: hidden; }
+  .facet-fill { height: 100%; border-radius: 2px; }
+  .facet-fill.str { background: var(--red-glow); }
+  .facet-fill.wre { background: var(--gold); }
+  .facet-fill.gnd { background: var(--cyan); }
+  .facet-val { font-family: var(--mono); font-size: .7rem; color: var(--text2); width: 28px; text-align: right; }
+
+  /* ── SECTION HEADERS ── */
+  .section-header { max-width: 1100px; margin: 0 auto 3rem; padding: 0 2rem; }
+  .section-eyebrow { font-family: var(--mono); font-size: .72rem; letter-spacing: .2em; color: var(--cyan); text-transform: uppercase; margin-bottom: .6rem; display: flex; align-items: center; gap: .6rem; }
+  .section-eyebrow::after { content:''; flex:1; max-width:60px; height:1px; background:var(--cyan); opacity:.4; }
+  h2.section-title { font-family: var(--display); font-weight: 900; font-size: clamp(2rem,5vw,3.2rem); letter-spacing: .01em; text-transform: uppercase; line-height: 1; margin-bottom: .8rem; }
+  .section-desc { color: var(--text2); max-width: 560px; }
+
+  /* ── METHODOLOGY ── */
+  #methodology { padding: 6rem 2rem; background: var(--black2); }
+  .method-grid { max-width: 1100px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; align-items: start; }
+  .method-facets { display: flex; flex-direction: column; gap: 1.2rem; }
+  .facet-card { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 1.4rem; border-left: 3px solid var(--red); }
+  .facet-card.wre { border-left-color: var(--gold); }
+  .facet-card.gnd { border-left-color: var(--cyan); }
+  .facet-card-header { display: flex; align-items: center; gap: .8rem; margin-bottom: .8rem; }
+  .facet-icon { width: 36px; height: 36px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0; }
+  .facet-icon.str { background: rgba(224,21,53,.15); }
+  .facet-icon.wre { background: rgba(245,200,66,.12); }
+  .facet-icon.gnd { background: rgba(0,212,255,.1); }
+  .facet-card-title { font-family: var(--display); font-weight: 700; font-size: 1.1rem; letter-spacing: .05em; text-transform: uppercase; }
+  .facet-card p { font-size: .88rem; color: var(--text2); line-height: 1.6; margin-bottom: .6rem; }
+  .tag-list { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .6rem; }
+  .tag { font-family: var(--mono); font-size: .62rem; letter-spacing: .06em; padding: .2rem .55rem; border-radius: 2px; text-transform: uppercase; background: var(--surface2); color: var(--text3); border: 1px solid var(--border); }
+  .method-chart-side { position: sticky; top: 80px; }
+  .chart-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; margin-bottom: 1.2rem; }
+  .chart-card-title { font-family: var(--mono); font-size: .7rem; letter-spacing: .12em; color: var(--text3); text-transform: uppercase; margin-bottom: 1rem; }
+  .formula-block { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 1.2rem; }
+  .formula-line { font-family: var(--mono); font-size: .82rem; color: var(--cyan); padding: .3rem 0; line-height: 1.8; }
+  .formula-comment { color: var(--text3); }
+  .formula-var { color: var(--gold); }
+  .data-disclaimer { max-width: 1100px; margin: 2rem auto 0; padding: 1rem 1.2rem; background: var(--surface); border: 1px solid var(--border); border-radius: 4px; font-family: var(--mono); font-size: .72rem; color: var(--text3); letter-spacing: .04em; }
+
+  /* ── EVENT REPORTS ── */
+  #reports { padding: 6rem 2rem; }
+  .reports-inner { max-width: 1100px; margin: 0 auto; }
+  .event-badge { display: inline-flex; align-items: center; gap: .5rem; background: var(--red-dim); border: 1px solid rgba(192,18,44,.3); border-radius: 3px; padding: .4rem .8rem; font-family: var(--mono); font-size: .72rem; letter-spacing: .1em; color: var(--red-glow); text-transform: uppercase; margin-bottom: 1.5rem; }
+  .live-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--red-glow); animation: blink 1.4s ease-in-out infinite; }
+  @keyframes blink { 0%,100% { opacity:1; } 50% { opacity:.2; } }
+  .fighter-cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px,1fr)); gap: 1.2rem; margin-bottom: 3rem; }
+  .fighter-card-full { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; transition: border-color .2s, transform .2s; }
+  .fighter-card-full:hover { border-color: rgba(0,212,255,.3); transform: translateY(-2px); }
+  .card-header-strip { height: 3px; background: linear-gradient(90deg, var(--red), var(--red-glow)); }
+  .card-body { padding: 1.3rem; }
+  .card-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; }
+  .card-weight-class { font-family: var(--mono); font-size: .62rem; color: var(--text3); letter-spacing: .12em; text-transform: uppercase; }
+  .card-fighter-name { font-family: var(--display); font-weight: 700; font-size: 1.25rem; letter-spacing: .03em; line-height: 1.1; margin-top: .2rem; }
+  .card-result { font-family: var(--mono); font-size: .65rem; padding: .2rem .5rem; border-radius: 2px; text-transform: uppercase; letter-spacing: .08em; }
+  .card-result.win { background: rgba(0,212,255,.1); color: var(--cyan); border: 1px solid rgba(0,212,255,.2); }
+  .card-result.loss { background: rgba(192,18,44,.1); color: #ff4d63; border: 1px solid rgba(192,18,44,.2); }
+  .ois-display { text-align: right; }
+  .ois-number { font-family: var(--display); font-weight: 900; font-size: 3rem; line-height: 1; color: var(--red-glow); }
+  .ois-label { font-family: var(--mono); font-size: .58rem; letter-spacing: .15em; color: var(--text3); text-transform: uppercase; }
+  .card-insight { font-size: .82rem; color: var(--text2); line-height: 1.5; margin-top: .8rem; padding-top: .8rem; border-top: 1px solid var(--border); font-style: italic; }
+  .card-actions { display: flex; gap: .5rem; margin-top: .8rem; }
+  .btn-profile { background: transparent; color: var(--cyan); font-family: var(--display); font-weight: 700; font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; padding: .45rem 1rem; border: 1px solid rgba(0,212,255,.3); border-radius: 3px; cursor: pointer; flex: 1; transition: background .2s; }
+  .btn-profile:hover { background: var(--cyan-dim); }
+
+  /* ── TABLE ── */
+  .table-section { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; margin-bottom: 2rem; }
+  .table-header-bar { display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.2rem; border-bottom: 1px solid var(--border); flex-wrap: wrap; gap: .5rem; }
+  .table-title { font-family: var(--display); font-weight: 700; font-size: .95rem; letter-spacing: .08em; text-transform: uppercase; }
+  .sort-btns { display: flex; gap: .4rem; }
+  .sort-btn { font-family: var(--mono); font-size: .65rem; letter-spacing: .08em; text-transform: uppercase; padding: .3rem .6rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 2px; color: var(--text3); cursor: pointer; transition: color .15s, border-color .15s; }
+  .sort-btn.active, .sort-btn:hover { color: var(--cyan); border-color: rgba(0,212,255,.3); }
+  table { width: 100%; border-collapse: collapse; }
+  th { font-family: var(--mono); font-size: .65rem; letter-spacing: .1em; text-transform: uppercase; color: var(--text3); text-align: left; padding: .6rem 1.2rem; border-bottom: 1px solid var(--border); cursor: pointer; }
+  th:hover { color: var(--text2); }
+  td { padding: .75rem 1.2rem; font-size: .88rem; border-bottom: 1px solid rgba(255,255,255,.03); color: var(--text2); }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(255,255,255,.02); }
+  .td-name { font-weight: 600; color: var(--text); font-family: var(--display); font-size: 1rem; letter-spacing: .03em; cursor: pointer; }
+  .td-name:hover { color: var(--cyan); }
+  .td-ois { font-family: var(--display); font-weight: 900; font-size: 1.2rem; color: var(--red-glow); }
+  .td-score { font-family: var(--mono); font-size: .8rem; }
+  .td-change { font-family: var(--mono); font-size: .75rem; }
+  .td-change.up { color: var(--green); }
+  .td-change.down { color: #f87171; }
+
+  /* ── FIGHTER DATABASE ── */
+  #database { padding: 6rem 2rem; background: var(--black2); }
+  .db-inner { max-width: 1100px; margin: 0 auto; }
+  .search-bar-wrap { position: relative; margin-bottom: 1.5rem; }
+  .search-bar { width: 100%; background: var(--surface); border: 1px solid var(--border2); border-radius: 6px; padding: .85rem 1rem .85rem 3rem; font-family: var(--body); font-size: 1rem; color: var(--text); outline: none; transition: border-color .2s; }
+  .search-bar:focus { border-color: rgba(0,212,255,.4); }
+  .search-bar::placeholder { color: var(--text3); }
+  .search-icon { position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--text3); }
+  .db-filters { display: flex; gap: .5rem; flex-wrap: wrap; margin-bottom: 2rem; }
+  .filter-btn { font-family: var(--mono); font-size: .65rem; letter-spacing: .08em; text-transform: uppercase; padding: .35rem .8rem; background: var(--surface); border: 1px solid var(--border); border-radius: 2px; color: var(--text3); cursor: pointer; transition: all .15s; }
+  .filter-btn.active, .filter-btn:hover { background: var(--cyan-dim); color: var(--cyan); border-color: rgba(0,212,255,.3); }
+  .db-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px,1fr)); gap: 1rem; }
+  .db-card { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 1.1rem; cursor: pointer; transition: border-color .2s, transform .15s; display: flex; align-items: center; gap: 1rem; }
+  .db-card:hover { border-color: rgba(0,212,255,.2); transform: translateY(-1px); }
+  .db-avatar { width: 48px; height: 48px; border-radius: 4px; background: var(--surface2); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-family: var(--display); font-weight: 900; font-size: 1.1rem; color: var(--text3); flex-shrink: 0; }
+  .db-info { flex: 1; min-width: 0; }
+  .db-name { font-family: var(--display); font-weight: 700; font-size: 1rem; letter-spacing: .03em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .db-div { font-family: var(--mono); font-size: .62rem; color: var(--text3); text-transform: uppercase; letter-spacing: .08em; }
+  .db-ois-val { font-family: var(--display); font-weight: 900; font-size: 1.5rem; color: var(--red-glow); }
+
+  /* ── COMPARISON BANNER ── */
+  .compare-bar {
+    position: fixed; bottom: 0; left: 0; right: 0; z-index: 150;
+    background: rgba(8,10,12,.97);
+    border-top: 1px solid rgba(245,200,66,.3);
+    padding: 1rem 2rem;
+    display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;
+    transform: translateY(100%);
+    transition: transform .3s ease;
+  }
+  .compare-bar.visible { transform: translateY(0); }
+  .compare-bar-label { font-family: var(--mono); font-size: .7rem; color: var(--text3); letter-spacing: .1em; text-transform: uppercase; margin-right: auto; }
+  .compare-slot { display: flex; align-items: center; gap: .6rem; background: var(--surface); border: 1px solid rgba(245,200,66,.25); border-radius: 4px; padding: .4rem .8rem; min-width: 160px; }
+  .compare-slot-name { font-family: var(--display); font-weight: 700; font-size: .9rem; flex: 1; }
+  .compare-slot-empty { color: var(--text3); font-style: italic; font-size: .85rem; }
+  .compare-slot-remove { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 1rem; padding: 0 .2rem; }
+  .compare-slot-remove:hover { color: var(--text); }
+  .btn-run-compare { background: var(--gold); color: #1a1200; font-family: var(--display); font-weight: 700; font-size: .85rem; letter-spacing: .1em; text-transform: uppercase; padding: .6rem 1.4rem; border: none; border-radius: 3px; cursor: pointer; transition: opacity .15s; white-space: nowrap; }
+  .btn-run-compare:disabled { opacity: .4; cursor: not-allowed; }
+  .btn-run-compare:not(:disabled):hover { opacity: .85; }
+  .btn-clear-compare { background: transparent; color: var(--text3); font-family: var(--mono); font-size: .65rem; letter-spacing: .08em; text-transform: uppercase; padding: .4rem .8rem; border: 1px solid var(--border); border-radius: 3px; cursor: pointer; }
+  .btn-clear-compare:hover { color: var(--text); }
+
+  /* ── FIGHTER MODAL ── */
+  .modal-overlay { display: none; position: fixed; inset: 0; z-index: 200; background: rgba(0,0,0,.85); backdrop-filter: blur(4px); align-items: center; justify-content: center; padding: 1rem; }
+  .modal-overlay.open { display: flex; }
+  .modal-box { background: var(--surface); border: 1px solid var(--border2); border-radius: 10px; width: 100%; max-width: 800px; max-height: 90vh; overflow-y: auto; }
+  .modal-topbar { display: flex; align-items: center; justify-content: space-between; padding: 1.2rem 1.5rem; border-bottom: 1px solid var(--border); }
+  .modal-close { background: none; border: 1px solid var(--border); color: var(--text2); border-radius: 3px; width: 32px; height: 32px; cursor: pointer; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; transition: color .15s; }
+  .modal-close:hover { color: var(--text); }
+  .modal-content { padding: 1.5rem; }
+  .modal-stats-row { display: grid; grid-template-columns: repeat(4,1fr); gap: .8rem; margin-bottom: 1.5rem; }
+  .modal-stat { background: var(--surface2); border-radius: 4px; padding: .8rem; text-align: center; }
+  .modal-stat-val { font-family: var(--display); font-weight: 900; font-size: 1.8rem; line-height: 1; margin-bottom: .2rem; }
+  .modal-stat-val.ois-val { color: var(--red-glow); }
+  .modal-stat-val.str-val { color: var(--red-glow); }
+  .modal-stat-val.wre-val { color: var(--gold); }
+  .modal-stat-val.gnd-val { color: var(--cyan); }
+  .modal-stat-label { font-family: var(--mono); font-size: .6rem; color: var(--text3); text-transform: uppercase; letter-spacing: .1em; }
+  .modal-charts-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.2rem; }
+  .modal-chart-wrap { background: var(--surface2); border-radius: 6px; padding: 1rem; }
+  .modal-chart-title { font-family: var(--mono); font-size: .62rem; color: var(--text3); letter-spacing: .1em; text-transform: uppercase; margin-bottom: .8rem; }
+  .modal-insight { background: var(--surface2); border-radius: 4px; padding: 1rem; font-size: .88rem; color: var(--text2); line-height: 1.7; font-style: italic; margin-bottom: 1.2rem; }
+
+  /* ── FIGHT HISTORY TABLE ── */
+  .fight-history { margin-top: 1rem; }
+  .fight-history-title { font-family: var(--mono); font-size: .65rem; letter-spacing: .12em; color: var(--text3); text-transform: uppercase; margin-bottom: .6rem; }
+  .fight-table { width: 100%; border-collapse: collapse; font-size: .82rem; }
+  .fight-table th { font-family: var(--mono); font-size: .6rem; letter-spacing: .08em; text-transform: uppercase; color: var(--text3); padding: .4rem .6rem; border-bottom: 1px solid var(--border); text-align: left; }
+  .fight-table td { padding: .5rem .6rem; border-bottom: 1px solid rgba(255,255,255,.03); color: var(--text2); }
+  .fight-table tr:last-child td { border-bottom: none; }
+  .fight-result-w { color: var(--cyan); font-family: var(--mono); font-weight: 700; }
+  .fight-result-l { color: #f87171; font-family: var(--mono); font-weight: 700; }
+  .fight-ois { font-family: var(--display); font-weight: 700; font-size: 1rem; color: var(--red-glow); }
+
+  /* ── COMPARE MODAL ── */
+  .compare-modal-box { max-width: 960px; }
+  .compare-header-row { display: grid; grid-template-columns: 1fr 80px 1fr; gap: 1rem; align-items: center; margin-bottom: 1.5rem; }
+  .compare-fighter-head { text-align: center; }
+  .compare-vs { font-family: var(--display); font-weight: 900; font-size: 2rem; color: var(--text3); text-align: center; }
+  .compare-name { font-family: var(--display); font-weight: 900; font-size: 1.5rem; letter-spacing: .02em; }
+  .compare-div { font-family: var(--mono); font-size: .65rem; color: var(--text3); letter-spacing: .1em; text-transform: uppercase; }
+  .compare-ois-big { font-family: var(--display); font-weight: 900; font-size: 3.5rem; color: var(--red-glow); line-height: 1; margin: .3rem 0; }
+  .compare-stat-grid { display: flex; flex-direction: column; gap: .6rem; margin-bottom: 1.5rem; }
+  .compare-stat-row { display: grid; grid-template-columns: 1fr 120px 1fr; gap: .5rem; align-items: center; }
+  .compare-stat-val { font-family: var(--mono); font-size: .9rem; font-weight: 700; }
+  .compare-stat-val.left { text-align: right; }
+  .compare-stat-val.right { text-align: left; }
+  .compare-stat-val.winner { color: var(--green); }
+  .compare-stat-label { font-family: var(--mono); font-size: .62rem; color: var(--text3); text-transform: uppercase; letter-spacing: .08em; text-align: center; }
+  .compare-bar-row { display: grid; grid-template-columns: 1fr 120px 1fr; gap: .5rem; align-items: center; }
+  .compare-mini-bar { height: 6px; border-radius: 3px; background: var(--surface2); overflow: hidden; }
+  .compare-mini-fill { height: 100%; border-radius: 3px; }
+  .compare-mini-fill.str { background: var(--red-glow); }
+  .compare-mini-fill.wre { background: var(--gold); }
+  .compare-mini-fill.gnd { background: var(--cyan); }
+  .compare-mini-fill.ois { background: linear-gradient(90deg, var(--red), var(--red-glow)); }
+  .compare-left-bar { direction: rtl; }
+  .compare-charts-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+
+  /* ── ABOUT ── */
+  #about { padding: 6rem 2rem; }
+  .about-inner { max-width: 800px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; align-items: start; }
+  .about-text p { color: var(--text2); line-height: 1.8; margin-bottom: 1rem; font-size: .95rem; }
+  .social-card { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 1.2rem; display: flex; align-items: center; gap: 1rem; text-decoration: none; color: var(--text); transition: border-color .2s; margin-bottom: 1rem; }
+  .social-card:hover { border-color: var(--border2); }
+  .social-handle { font-family: var(--display); font-weight: 700; font-size: 1rem; }
+  .social-sub { font-size: .8rem; color: var(--text3); }
+  .stat-pills { display: flex; gap: .6rem; flex-wrap: wrap; margin-top: 1.2rem; }
+  .stat-pill { background: var(--surface2); border: 1px solid var(--border); border-radius: 20px; padding: .3rem .8rem; font-family: var(--mono); font-size: .68rem; color: var(--text3); text-transform: uppercase; letter-spacing: .06em; }
+
+  /* ── FOOTER ── */
+  footer { background: var(--black); border-top: 1px solid var(--border); padding: 2.5rem 2rem; position: relative; z-index: 1; }
+  .footer-inner { max-width: 1100px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; }
+  .footer-logo-text { font-family: var(--display); font-weight: 900; font-size: 1.2rem; letter-spacing: .04em; }
+  .footer-logo-text span { color: var(--red-glow); }
+  .footer-copy { font-family: var(--mono); font-size: .65rem; color: var(--text3); letter-spacing: .06em; margin-top: .3rem; }
+  .footer-links { display: flex; gap: 1.5rem; flex-wrap: wrap; }
+  .footer-links a { font-family: var(--mono); font-size: .7rem; color: var(--text3); text-decoration: none; letter-spacing: .06em; transition: color .15s; }
+  .footer-links a:hover { color: var(--cyan); }
+
+  /* ── LOADING ── */
+  .loading-state { display: flex; align-items: center; justify-content: center; padding: 4rem 2rem; flex-direction: column; gap: 1rem; }
+  .loading-spinner { width: 36px; height: 36px; border: 2px solid var(--border2); border-top-color: var(--cyan); border-radius: 50%; animation: spin .8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-text { font-family: var(--mono); font-size: .75rem; color: var(--text3); letter-spacing: .1em; text-transform: uppercase; }
+  .error-state { padding: 3rem 2rem; text-align: center; }
+  .error-state p { font-family: var(--mono); font-size: .82rem; color: #f87171; margin-bottom: .5rem; }
+  .error-state small { font-family: var(--mono); font-size: .68rem; color: var(--text3); }
+
+  /* ── MISC ── */
+  .fade-in { opacity: 0; transform: translateY(20px); transition: opacity .6s ease, transform .6s ease; }
+  .fade-in.visible { opacity: 1; transform: translateY(0); }
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--black); }
+  ::-webkit-scrollbar-thumb { background: var(--surface3); border-radius: 3px; }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 768px) {
+    .nav-links { display: none; }
+    .nav-toggle { display: block; }
+    .method-grid { grid-template-columns: 1fr; }
+    .method-chart-side { position: static; }
+    .about-inner { grid-template-columns: 1fr; }
+    .modal-stats-row { grid-template-columns: repeat(2,1fr); }
+    .modal-charts-row { grid-template-columns: 1fr; }
+    .compare-charts-row { grid-template-columns: 1fr; }
+    .fighter-cards-grid { grid-template-columns: 1fr 1fr; }
+    .footer-inner { flex-direction: column; text-align: center; }
+    .footer-links { justify-content: center; }
+    .compare-header-row { grid-template-columns: 1fr 40px 1fr; }
+    .compare-name { font-size: 1.1rem; }
+    .compare-ois-big { font-size: 2.5rem; }
+  }
+  @media (max-width: 500px) {
+    .fighter-cards-grid { grid-template-columns: 1fr; }
+    .hero-cards { grid-template-columns: 1fr 1fr; }
+    .compare-modal-box { max-width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav role="navigation" aria-label="Main navigation">
+  <a href="#home" class="nav-logo" aria-label="OctagonImpact Home">
+    <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path d="M11 2H25L34 11V25L25 34H11L2 25V11L11 2Z" stroke="#c0122c" stroke-width="1.5" fill="none"/>
+      <path d="M14 8H22L28 14V22L22 28H14L8 22V14L14 8Z" fill="rgba(192,18,44,0.15)" stroke="rgba(0,212,255,0.4)" stroke-width="0.75"/>
+      <circle cx="18" cy="18" r="3" fill="#c0122c"/>
+    </svg>
+    <span class="nav-logo-text">OCTAGON<span>IMPACT</span></span>
+  </a>
+  <ul class="nav-links" role="list">
+    <li><a href="#home" class="active">Home</a></li>
+    <li><a href="#methodology">Methodology</a></li>
+    <li><a href="#reports">Reports</a></li>
+    <li><a href="#database">Fighters</a></li>
+    <li><a href="#about">Lab</a></li>
+    <li><a href="#reports" class="nav-cta">Latest Event</a></li>
+  </ul>
+  <button class="nav-toggle" aria-label="Toggle menu" onclick="document.querySelector('.mobile-menu').classList.toggle('open')">☰</button>
+</nav>
+<nav class="mobile-menu" aria-label="Mobile navigation">
+  <a href="#home" onclick="this.closest('.mobile-menu').classList.remove('open')">Home</a>
+  <a href="#methodology" onclick="this.closest('.mobile-menu').classList.remove('open')">Methodology</a>
+  <a href="#reports" onclick="this.closest('.mobile-menu').classList.remove('open')">Reports</a>
+  <a href="#database" onclick="this.closest('.mobile-menu').classList.remove('open')">Fighters</a>
+  <a href="#about" onclick="this.closest('.mobile-menu').classList.remove('open')">The Lab</a>
+</nav>
+
+<!-- HERO -->
+<section id="home" aria-label="Hero">
+  <div class="hero-bg-octagon" aria-hidden="true"></div>
+  <div class="hero-bg-octagon2" aria-hidden="true"></div>
+  <div class="hero-content">
+    <div class="hero-eyebrow">UFC Analytics Platform · Est. 2024</div>
+    <h1 class="hero-title">MEASURE<br>TRUE <span class="accent">FIGHTER</span><br><span class="accent2">IMPACT</span></h1>
+    <p class="hero-sub">The Octagon Impact Score (OIS) grades every UFC fighter on Striking, Wrestling, and Ground performance using a proprietary 0–100 methodology powered by UFCStats.com data.</p>
+    <div class="hero-btns">
+      <a href="#reports" class="btn-primary">Explore Latest Scores</a>
+      <a href="#methodology" class="btn-outline">How OIS Works</a>
+    </div>
+    <div class="hero-cards" id="heroCards">
+      <div class="loading-state"><div class="loading-spinner"></div><div class="loading-text">Loading fighters…</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- METHODOLOGY -->
+<section id="methodology" aria-label="OIS Methodology">
+  <div class="section-header fade-in">
+    <div class="section-eyebrow">System</div>
+    <h2 class="section-title">How OIS Works</h2>
+    <p class="section-desc">Three distinct facets. One unified score. Each component is calculated independently then combined using weighted averages and opponent-adjusted multipliers.</p>
+  </div>
+  <div class="method-grid" style="padding:0 2rem;">
+    <div class="method-facets fade-in">
+      <div class="facet-card str">
+        <div class="facet-card-header">
+          <div class="facet-icon str">🥊</div>
+          <div class="facet-card-title" style="color:var(--red-glow)">Striking Impact</div>
+        </div>
+        <p>Measures the true damage and efficiency of a fighter's striking offense and defense. Goes beyond volume to weigh power, accuracy, and defensive shell quality.</p>
+        <div class="tag-list"><span class="tag">Significant Strike %</span><span class="tag">Knockdown Rate</span><span class="tag">Absorption Rate</span><span class="tag">Head Defense %</span><span class="tag">Power Output Index</span></div>
+      </div>
+      <div class="facet-card wre">
+        <div class="facet-card-header">
+          <div class="facet-icon wre">🤼</div>
+          <div class="facet-card-title" style="color:var(--gold)">Wrestling Impact</div>
+        </div>
+        <p>Evaluates control of the clinch, takedown entry, takedown defense, and time domination on the feet. Rewards cage control and aggressive wrestling initiatives.</p>
+        <div class="tag-list"><span class="tag">Takedown %</span><span class="tag">TD Defense %</span><span class="tag">Clinch Control Time</span><span class="tag">Cage Pressure</span><span class="tag">Scramble Win Rate</span></div>
+      </div>
+      <div class="facet-card gnd">
+        <div class="facet-card-header">
+          <div class="facet-icon gnd">🥋</div>
+          <div class="facet-card-title" style="color:var(--cyan)">Ground Impact</div>
+        </div>
+        <p>Grades positional dominance, submission threat rate, ground-and-pound efficiency, and the ability to advance or prevent advances in grappling exchanges.</p>
+        <div class="tag-list"><span class="tag">Position Advances</span><span class="tag">Sub Attempts/15</span><span class="tag">Ground Strike Acc.</span><span class="tag">Back Takes</span><span class="tag">Escape Rate</span></div>
+      </div>
+      <div class="formula-block fade-in">
+        <div class="chart-card-title" style="margin-bottom:1rem;font-family:var(--mono);font-size:.7rem;letter-spacing:.12em;color:var(--text3);text-transform:uppercase;">OIS Formula</div>
+        <div class="formula-line"><span class="formula-var">OIS</span> = (<span class="formula-var">STR</span><span style="color:var(--text3)">×0.40</span> + <span class="formula-var">WRE</span><span style="color:var(--text3)">×0.30</span> + <span class="formula-var">GND</span><span style="color:var(--text3)">×0.30</span>)</div>
+        <div class="formula-line"><span class="formula-var">&nbsp;&nbsp;&nbsp;&nbsp;× ImpactMult</span> <span style="color:var(--text2)">(0.85–1.15)</span></div>
+        <div class="formula-line"><span class="formula-var">&nbsp;&nbsp;&nbsp;&nbsp;× OppAdj</span> <span style="color:var(--text2)">(quality of opposition)</span></div>
+        <div style="margin-top:.8rem;padding-top:.8rem;border-top:1px solid var(--border)">
+          <div class="formula-comment formula-line">// Scores range 0–100 per fighter per fight</div>
+          <div class="formula-comment formula-line">// Career OIS = rolling 5-fight weighted avg</div>
+        </div>
+      </div>
+    </div>
+    <div class="method-chart-side fade-in">
+      <div class="chart-card">
+        <div class="chart-card-title">Sample Radar — Islam Makhachev</div>
+        <div style="position:relative;width:100%;height:280px;"><canvas id="methodRadar" role="img" aria-label="Radar chart: Striking 71, Wrestling 96, Ground 98">Striking 71, Wrestling 96, Ground 98</canvas></div>
+      </div>
+      <div class="chart-card" style="margin-top:1.2rem;">
+        <div class="chart-card-title">Division Comparison — LW Top 5</div>
+        <div style="position:relative;width:100%;height:220px;"><canvas id="methodBar" role="img" aria-label="OIS bar chart LW top 5">LW OIS comparison</canvas></div>
+      </div>
+    </div>
+  </div>
+  <div class="data-disclaimer" style="padding:0 2rem;margin-top:2rem;">⚠ Data sourced from UFCStats.com (public dataset) + proprietary OIS methodology. Scores represent analytical assessments, not official UFC rankings. All weights subject to ongoing refinement.</div>
+</section>
+
+<!-- REPORTS -->
+<section id="reports" aria-label="Latest UFC Event Reports">
+  <div class="reports-inner" style="padding-top:6rem;">
+    <div class="section-header fade-in" style="padding:0;margin-bottom:1.5rem;">
+      <div class="section-eyebrow">Latest Event</div>
+      <h2 class="section-title">Event Report Cards</h2>
+    </div>
+    <div class="event-badge fade-in"><span class="live-dot" aria-hidden="true"></span><span id="eventLabel">Loading…</span></div>
+    <div class="fighter-cards-grid fade-in" id="eventCards">
+      <div class="loading-state"><div class="loading-spinner"></div><div class="loading-text">Loading event data…</div></div>
+    </div>
+    <div class="table-section fade-in">
+      <div class="table-header-bar">
+        <div class="table-title">OIS Leaderboard</div>
+        <div class="sort-btns">
+          <button class="sort-btn active" onclick="sortTable('ois',this)">OIS ↓</button>
+          <button class="sort-btn" onclick="sortTable('str',this)">Striking</button>
+          <button class="sort-btn" onclick="sortTable('wre',this)">Wrestling</button>
+          <button class="sort-btn" onclick="sortTable('gnd',this)">Ground</button>
+        </div>
+      </div>
+      <div style="overflow-x:auto;">
+        <table aria-label="OIS Leaderboard">
+          <thead><tr><th>#</th><th>Fighter</th><th>Division</th><th>OIS</th><th>STR</th><th>WRE</th><th>GND</th><th>Change</th></tr></thead>
+          <tbody id="leaderboardBody"><tr><td colspan="8" style="text-align:center;padding:2rem;color:var(--text3);font-family:var(--mono);font-size:.8rem;">Loading…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DATABASE -->
+<section id="database" aria-label="Fighter Database">
+  <div class="db-inner" style="padding-top:6rem;">
+    <div class="section-header fade-in" style="padding:0;margin-bottom:2rem;">
+      <div class="section-eyebrow">Database</div>
+      <h2 class="section-title">Fighter Search</h2>
+      <p class="section-desc">Search fighters by name or division. Click any card for a full OIS profile. Use the Compare button to go head-to-head.</p>
+    </div>
+    <div class="search-bar-wrap fade-in">
+      <span class="search-icon" aria-hidden="true">🔍</span>
+      <input type="search" class="search-bar" placeholder="Search fighters…" id="fighterSearch" oninput="filterFighters()" aria-label="Search fighters">
+    </div>
+    <div class="db-filters fade-in" role="group" aria-label="Division filters" id="divFilters">
+      <button class="filter-btn active" onclick="setDivFilter('all',this)">All</button>
+      <button class="filter-btn" onclick="setDivFilter('Flyweight',this)">FLW</button>
+      <button class="filter-btn" onclick="setDivFilter('Bantamweight',this)">BW</button>
+      <button class="filter-btn" onclick="setDivFilter('Featherweight',this)">FW</button>
+      <button class="filter-btn" onclick="setDivFilter('Lightweight',this)">LW</button>
+      <button class="filter-btn" onclick="setDivFilter('Welterweight',this)">WW</button>
+      <button class="filter-btn" onclick="setDivFilter('Middleweight',this)">MW</button>
+      <button class="filter-btn" onclick="setDivFilter('Light Heavyweight',this)">LHW</button>
+      <button class="filter-btn" onclick="setDivFilter('Heavyweight',this)">HW</button>
+    </div>
+    <div class="db-grid fade-in" id="dbGrid">
+      <div class="loading-state" style="grid-column:1/-1"><div class="loading-spinner"></div><div class="loading-text">Loading database…</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ABOUT -->
+<section id="about" aria-label="About OctagonImpact">
+  <div class="about-inner" style="padding-top:6rem;">
+    <div class="about-text fade-in">
+      <div class="section-eyebrow" style="margin-bottom:.8rem;">The Lab</div>
+      <h2 class="section-title" style="margin-bottom:1.2rem;">Midwest UFC Analytics</h2>
+      <p>OctagonImpact is an independent analytics operation dedicated to measuring what actually matters inside the octagon — not just stats, but true impact.</p>
+      <p>The OIS methodology was built out of frustration with surface-level fight coverage. Takedown numbers mean nothing without context. Strike counts ignore defense. We built a system that respects the sport's complexity.</p>
+      <p>Every score is derived from publicly available UFCStats.com data, run through our custom weighting model, and cross-validated against fight outcomes over a historical dataset of 2,400+ bouts.</p>
+      <div class="stat-pills">
+        <span class="stat-pill">2,400+ Fights Graded</span>
+        <span class="stat-pill">12 Weight Classes</span>
+        <span class="stat-pill">Public Data · Original Method</span>
+      </div>
+    </div>
+    <div class="fade-in">
+      <a href="https://x.com/octagonimpact" target="_blank" rel="noopener" class="social-card" aria-label="Follow on X">
+        <span style="font-size:1.4rem;" aria-hidden="true">𝕏</span>
+        <div><div class="social-handle">@octagonimpact</div><div class="social-sub">Fight night scores · Breakdowns · Debate</div></div>
+      </a>
+      <div class="chart-card">
+        <div class="chart-card-title">Methodology Validation Accuracy</div>
+        <div style="position:relative;width:100%;height:160px;"><canvas id="validationChart" role="img" aria-label="OIS prediction accuracy trend">Validation accuracy trend</canvas></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer role="contentinfo">
+  <div class="footer-inner">
+    <div>
+      <div class="footer-logo-text">OCTAGON<span>IMPACT</span></div>
+      <div class="footer-copy">© 2025 OctagonImpact.com · Data: UFCStats.com · Not affiliated with UFC / Zuffa LLC</div>
+    </div>
+    <nav class="footer-links" aria-label="Footer links">
+      <a href="#home">Home</a>
+      <a href="#methodology">Methodology</a>
+      <a href="#reports">Reports</a>
+      <a href="#database">Fighters</a>
+      <a href="https://x.com/octagonimpact" target="_blank" rel="noopener">𝕏 Twitter</a>
+    </nav>
+  </div>
+</footer>
+
+<!-- FIGHTER PROFILE MODAL -->
+<div class="modal-overlay" id="fighterModal" role="dialog" aria-modal="true" aria-labelledby="modalFighterName">
+  <div class="modal-box">
+    <div class="modal-topbar">
+      <div>
+        <div id="modalDivision" style="font-family:var(--mono);font-size:.62rem;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;"></div>
+        <div id="modalFighterName" style="font-family:var(--display);font-weight:900;font-size:1.6rem;letter-spacing:.03em;"></div>
+      </div>
+      <button class="modal-close" onclick="closeModal('fighterModal')" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-content">
+      <div class="modal-stats-row">
+        <div class="modal-stat"><div class="modal-stat-val ois-val" id="modalOIS">—</div><div class="modal-stat-label">OIS Score</div></div>
+        <div class="modal-stat"><div class="modal-stat-val str-val" id="modalSTR">—</div><div class="modal-stat-label">Striking</div></div>
+        <div class="modal-stat"><div class="modal-stat-val wre-val" id="modalWRE">—</div><div class="modal-stat-label">Wrestling</div></div>
+        <div class="modal-stat"><div class="modal-stat-val gnd-val" id="modalGND">—</div><div class="modal-stat-label">Ground</div></div>
+      </div>
+      <div class="modal-charts-row">
+        <div class="modal-chart-wrap">
+          <div class="modal-chart-title">OIS Profile Radar</div>
+          <div style="position:relative;height:220px;"><canvas id="modalRadar" role="img" aria-label="Fighter radar">Fighter radar</canvas></div>
+        </div>
+        <div class="modal-chart-wrap">
+          <div class="modal-chart-title">Career OIS Trend</div>
+          <div style="position:relative;height:220px;"><canvas id="modalTrend" role="img" aria-label="Career trend">Career OIS trend</canvas></div>
+        </div>
+      </div>
+      <div class="modal-insight" id="modalInsight"></div>
+      <div class="fight-history">
+        <div class="fight-history-title">Last 5 Fights</div>
+        <table class="fight-table" aria-label="Fight history">
+          <thead><tr><th>Opponent</th><th>Event</th><th>Date</th><th>Result</th><th>Method</th><th>OIS</th><th>STR</th><th>WRE</th><th>GND</th></tr></thead>
+          <tbody id="fightHistoryBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- COMPARISON MODAL -->
+<div class="modal-overlay" id="compareModal" role="dialog" aria-modal="true" aria-labelledby="compareModalTitle">
+  <div class="modal-box compare-modal-box">
+    <div class="modal-topbar">
+      <div id="compareModalTitle" style="font-family:var(--display);font-weight:900;font-size:1.2rem;letter-spacing:.05em;text-transform:uppercase;color:var(--gold);">Fighter Comparison</div>
+      <button class="modal-close" onclick="closeModal('compareModal')" aria-label="Close comparison">✕</button>
+    </div>
+    <div class="modal-content">
+      <div class="compare-header-row" id="compareHeader"></div>
+      <div class="compare-stat-grid" id="compareStats"></div>
+      <div class="compare-charts-row">
+        <div class="modal-chart-wrap">
+          <div class="modal-chart-title">OIS Radar Overlay</div>
+          <div style="position:relative;height:260px;"><canvas id="compareRadar" role="img" aria-label="Comparison radar chart">Comparison radar</canvas></div>
+        </div>
+        <div class="modal-chart-wrap">
+          <div class="modal-chart-title">Career OIS Trends</div>
+          <div style="position:relative;height:260px;"><canvas id="compareTrend" role="img" aria-label="Comparison trend chart">Comparison trend</canvas></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- COMPARE BAR -->
+<div class="compare-bar" id="compareBar" role="status" aria-live="polite">
+  <div class="compare-bar-label">Compare Mode</div>
+  <div class="compare-slot" id="compareSlot1"><span class="compare-slot-name compare-slot-empty" id="compareName1">Select a fighter</span><button class="compare-slot-remove" onclick="removeFromCompare(0)" aria-label="Remove fighter 1">✕</button></div>
+  <div class="compare-slot" id="compareSlot2"><span class="compare-slot-name compare-slot-empty" id="compareName2">Select a fighter</span><button class="compare-slot-remove" onclick="removeFromCompare(1)" aria-label="Remove fighter 2">✕</button></div>
+  <button class="btn-run-compare" id="btnRunCompare" onclick="openCompareModal()" disabled>Compare →</button>
+  <button class="btn-clear-compare" onclick="clearCompare()">Clear</button>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════════════════
+let FIGHTERS = [];
+let divFilter = 'all';
+let currentSort = 'ois';
+let compareQueue = []; // max 2 fighter IDs
+
+// ══════════════════════════════════════════════════════════════
+// DATA LOADING
+// ══════════════════════════════════════════════════════════════
+async function loadFighters() {
+  try {
+    const res = await fetch('fighters.json');
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    FIGHTERS = await res.json();
+    init();
+  } catch (err) {
+    console.error('Failed to load fighters.json:', err);
+    showDataError();
+  }
+}
+
+function showDataError() {
+  const errHTML = `<div class="error-state">
+    <p>Could not load fighters.json</p>
+    <small>Make sure fighters.json is in the same folder as index.html and you're running this from a web server (not just double-clicking the file).</small>
+  </div>`;
+  document.getElementById('heroCards').innerHTML = errHTML;
+  document.getElementById('eventCards').innerHTML = errHTML;
+  document.getElementById('dbGrid').innerHTML = errHTML;
+}
+
+function init() {
+  buildHeroCards();
+  buildEventCards();
+  renderLeaderboard();
+  renderDB();
+  buildMethodCharts();
+  buildValidationChart();
+  initScrollAnim();
+  initNavScroll();
+}
+
+// ══════════════════════════════════════════════════════════════
+// CHART HELPERS
+// ══════════════════════════════════════════════════════════════
+function destroyChart(id) {
+  const c = Chart.getChart(id);
+  if (c) c.destroy();
+}
+
+function makeRadar(canvasId, fighters, divAvg) {
+  destroyChart(canvasId);
+  const ctx = document.getElementById(canvasId);
+  if (!ctx) return;
+  const colors = ['#e01535', '#f5c842', '#00d4ff', '#a78bfa'];
+  const datasets = fighters.map((f, i) => ({
+    label: f.name.split(' ').pop(),
+    data: [f.str, f.wre, f.gnd, f.ois],
+    backgroundColor: colors[i] + '22',
+    borderColor: colors[i],
+    borderWidth: 2,
+    pointBackgroundColor: colors[i],
+    pointRadius: 4,
+  }));
+  if (divAvg) {
+    datasets.push({
+      label: 'Div. Avg',
+      data: divAvg,
+      backgroundColor: 'rgba(255,255,255,0.03)',
+      borderColor: 'rgba(255,255,255,0.2)',
+      borderWidth: 1,
+      borderDash: [4,3],
+      pointBackgroundColor: 'rgba(255,255,255,0.3)',
+      pointRadius: 2,
+    });
+  }
+  new Chart(ctx, {
+    type: 'radar',
+    data: { labels: ['STR','WRE','GND','OIS'], datasets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      scales: { r: {
+        min:0, max:100,
+        ticks: { stepSize:25, color:'#5a6170', font:{family:'Share Tech Mono',size:10}, backdropColor:'transparent' },
+        grid: { color:'rgba(255,255,255,0.07)' },
+        angleLines: { color:'rgba(255,255,255,0.07)' },
+        pointLabels: { color:'#9aa0aa', font:{family:'Barlow Condensed',size:12,weight:'700'} }
+      }},
+      plugins: { legend: { display: fighters.length > 1, position:'bottom', labels:{color:'#9aa0aa',font:{size:11},boxWidth:10,padding:12} } }
+    }
+  });
+}
+
+function makeTrend(canvasId, fighters) {
+  destroyChart(canvasId);
+  const ctx = document.getElementById(canvasId);
+  if (!ctx) return;
+  const colors = ['#e01535','#f5c842','#00d4ff'];
+  const datasets = fighters.map((f, i) => {
+    const history = (f.fights || []).slice().reverse();
+    return {
+      label: f.name.split(' ').pop(),
+      data: history.length ? history.map(fi => fi.ois) : generateFakeTrend(f.ois),
+      labels: history.length ? history.map(fi => fi.event ? fi.event.replace('UFC ','').substring(0,8) : '—') : ['F-4','F-3','F-2','F-1','Latest'],
+      borderColor: colors[i],
+      backgroundColor: colors[i] + '15',
+      fill: fighters.length === 1,
+      tension: 0.3,
+      pointBackgroundColor: colors[i],
+      pointRadius: 4,
+    };
+  });
+  const labels = datasets[0].labels || ['F-4','F-3','F-2','F-1','Latest'];
+  new Chart(ctx, {
+    type: 'line',
+    data: { labels, datasets: datasets.map(d => ({ ...d, labels: undefined })) },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      scales: {
+        x: { ticks:{color:'#5a6170',font:{size:9}}, grid:{color:'rgba(255,255,255,0.05)'} },
+        y: { min:30, max:100, ticks:{color:'#5a6170',font:{size:9}}, grid:{color:'rgba(255,255,255,0.05)'} }
+      },
+      plugins: { legend: { display: fighters.length > 1, position:'bottom', labels:{color:'#9aa0aa',font:{size:11},boxWidth:10,padding:12} } }
+    }
+  });
+}
+
+function generateFakeTrend(base) {
+  return [
+    Math.round(Math.max(40, base - 18 + Math.random()*8)),
+    Math.round(Math.max(40, base - 12 + Math.random()*6)),
+    Math.round(Math.max(40, base - 7 + Math.random()*5)),
+    Math.round(Math.max(40, base - 4 + Math.random()*3)),
+    base
+  ];
+}
+
+// ══════════════════════════════════════════════════════════════
+// HERO CARDS
+// ══════════════════════════════════════════════════════════════
+function buildHeroCards() {
+  const picks = FIGHTERS.slice(0,4);
+  document.getElementById('heroCards').innerHTML = picks.map(f => `
+    <div class="fighter-card-mini" onclick="openFighterModal(${f.id})" role="button" tabindex="0" aria-label="View ${f.name} OIS profile">
+      <div class="card-division">${f.division}</div>
+      <div class="card-name">${f.name}</div>
+      <div class="card-ois">${f.ois}</div>
+      <div class="card-ois-label">Octagon Impact Score</div>
+      <div class="card-facets">
+        ${facetBar('STR','str',f.str)}
+        ${facetBar('WRE','wre',f.wre)}
+        ${facetBar('GND','gnd',f.gnd)}
+      </div>
+    </div>`).join('');
+}
+
+function facetBar(label, cls, val) {
+  return `<div class="facet-row">
+    <span class="facet-label">${label}</span>
+    <div class="facet-bar"><div class="facet-fill ${cls}" style="width:${val}%"></div></div>
+    <span class="facet-val">${val}</span>
+  </div>`;
+}
+
+// ══════════════════════════════════════════════════════════════
+// EVENT CARDS
+// ══════════════════════════════════════════════════════════════
+function buildEventCards() {
+  const shown = FIGHTERS.slice(0,6);
+  const latestEvent = shown[0]?.event || 'Latest Event';
+  document.getElementById('eventLabel').textContent = `${latestEvent} · Most Recent Scores`;
+
+  document.getElementById('eventCards').innerHTML = shown.map(f => `
+    <div class="fighter-card-full" role="article" aria-label="${f.name} report card">
+      <div class="card-header-strip"></div>
+      <div class="card-body">
+        <div class="card-top">
+          <div class="card-info">
+            <div class="card-weight-class">${f.division} · ${f.record}</div>
+            <div class="card-fighter-name">${f.name}</div>
+            <div style="margin-top:.4rem"><span class="card-result ${f.result}">${f.result.toUpperCase()} · ${f.method}</span></div>
+          </div>
+          <div class="ois-display">
+            <div class="ois-number">${f.ois}</div>
+            <div class="ois-label">OIS</div>
+          </div>
+        </div>
+        <div class="card-facets">
+          ${facetBar('STR','str',f.str)}
+          ${facetBar('WRE','wre',f.wre)}
+          ${facetBar('GND','gnd',f.gnd)}
+        </div>
+        <div class="card-insight">${f.insight.substring(0,120)}…</div>
+        <div class="card-actions">
+          <button class="btn-profile" onclick="openFighterModal(${f.id})">Full Profile</button>
+          <button class="btn-compare ${compareQueue.includes(f.id) ? 'selected' : ''}" onclick="toggleCompare(${f.id}, this)">
+            ${compareQueue.includes(f.id) ? '✓ Added' : '+ Compare'}
+          </button>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+// ══════════════════════════════════════════════════════════════
+// LEADERBOARD
+// ══════════════════════════════════════════════════════════════
+function sortTable(key, btn) {
+  currentSort = key;
+  document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderLeaderboard();
+}
+
+function renderLeaderboard() {
+  const sorted = [...FIGHTERS].sort((a,b) => b[currentSort] - a[currentSort]);
+  document.getElementById('leaderboardBody').innerHTML = sorted.map((f,i) => `
+    <tr tabindex="0" role="button" aria-label="Open ${f.name} profile" onkeydown="if(event.key==='Enter')openFighterModal(${f.id})">
+      <td><span style="font-family:var(--mono);font-size:.8rem;color:var(--text3)">${i+1}</span></td>
+      <td class="td-name" onclick="openFighterModal(${f.id})">${f.name}</td>
+      <td style="color:var(--text3);font-size:.8rem">${f.division}</td>
+      <td class="td-ois">${f.ois}</td>
+      <td class="td-score" style="color:var(--red-glow)">${f.str}</td>
+      <td class="td-score" style="color:var(--gold)">${f.wre}</td>
+      <td class="td-score" style="color:var(--cyan)">${f.gnd}</td>
+      <td class="td-change ${parseFloat(f.change)>=0?'up':'down'}">${parseFloat(f.change)>=0?'▲':'▼'} ${Math.abs(parseFloat(f.change)).toFixed(1)}</td>
+    </tr>`).join('');
+}
+
+// ══════════════════════════════════════════════════════════════
+// DATABASE
+// ══════════════════════════════════════════════════════════════
+function filterFighters() { renderDB(document.getElementById('fighterSearch').value.toLowerCase(), divFilter); }
+function setDivFilter(div, btn) {
+  divFilter = div;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  filterFighters();
+}
+function renderDB(q='', div='all') {
+  const filtered = FIGHTERS.filter(f =>
+    (div === 'all' || f.division === div) &&
+    (f.name.toLowerCase().includes(q) || f.division.toLowerCase().includes(q))
+  );
+  if (!filtered.length) {
+    document.getElementById('dbGrid').innerHTML = `<div style="grid-column:1/-1;color:var(--text3);font-family:var(--mono);font-size:.8rem;padding:2rem 0">No fighters found.</div>`;
+    return;
+  }
+  document.getElementById('dbGrid').innerHTML = filtered.map(f => {
+    const initials = f.name.split(' ').map(w=>w[0]).join('').substring(0,2);
+    const selected = compareQueue.includes(f.id);
+    return `<div class="db-card" role="article" aria-label="${f.name}">
+      <div class="db-avatar" aria-hidden="true">${initials}</div>
+      <div class="db-info" onclick="openFighterModal(${f.id})" style="cursor:pointer">
+        <div class="db-name">${f.name}</div>
+        <div class="db-div">${f.division} · ${f.record}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:.3rem">
+        <div class="db-ois-val">${f.ois}</div>
+        <button class="btn-compare ${selected?'selected':''}" onclick="toggleCompare(${f.id},this)">${selected?'✓':'+'}</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════════════════════════
+// COMPARE
+// ══════════════════════════════════════════════════════════════
+function toggleCompare(id, btn) {
+  if (compareQueue.includes(id)) {
+    compareQueue = compareQueue.filter(x => x !== id);
+  } else {
+    if (compareQueue.length >= 2) {
+      alert('You already have 2 fighters selected. Remove one first.');
+      return;
+    }
+    compareQueue.push(id);
+  }
+  updateCompareBar();
+  // Refresh buttons across page
+  buildEventCards();
+  renderDB(document.getElementById('fighterSearch').value.toLowerCase(), divFilter);
+}
+
+function removeFromCompare(index) {
+  compareQueue.splice(index, 1);
+  updateCompareBar();
+  buildEventCards();
+  renderDB(document.getElementById('fighterSearch').value.toLowerCase(), divFilter);
+}
+
+function clearCompare() {
+  compareQueue = [];
+  updateCompareBar();
+  buildEventCards();
+  renderDB(document.getElementById('fighterSearch').value.toLowerCase(), divFilter);
+}
+
+function updateCompareBar() {
+  const bar = document.getElementById('compareBar');
+  const btn = document.getElementById('btnRunCompare');
+  const f1 = FIGHTERS.find(f => f.id === compareQueue[0]);
+  const f2 = FIGHTERS.find(f => f.id === compareQueue[1]);
+  document.getElementById('compareName1').textContent = f1 ? f1.name : 'Select a fighter';
+  document.getElementById('compareName2').textContent = f2 ? f2.name : 'Select a fighter';
+  document.getElementById('compareName1').classList.toggle('compare-slot-empty', !f1);
+  document.getElementById('compareName2').classList.toggle('compare-slot-empty', !f2);
+  bar.classList.toggle('visible', compareQueue.length > 0);
+  btn.disabled = compareQueue.length < 2;
+}
+
+function openCompareModal() {
+  const f1 = FIGHTERS.find(f => f.id === compareQueue[0]);
+  const f2 = FIGHTERS.find(f => f.id === compareQueue[1]);
+  if (!f1 || !f2) return;
+
+  // Header
+  const winner = (stat) => {
+    if (f1[stat] > f2[stat]) return 'left';
+    if (f2[stat] > f1[stat]) return 'right';
+    return 'tie';
+  };
+
+  document.getElementById('compareHeader').innerHTML = `
+    <div class="compare-fighter-head">
+      <div class="compare-div">${f1.division}</div>
+      <div class="compare-name">${f1.name}</div>
+      <div class="compare-div" style="color:var(--text3)">${f1.record}</div>
+      <div class="compare-ois-big">${f1.ois}</div>
+      <div style="font-family:var(--mono);font-size:.6rem;color:var(--text3);text-transform:uppercase;letter-spacing:.1em">OIS</div>
+    </div>
+    <div class="compare-vs">VS</div>
+    <div class="compare-fighter-head">
+      <div class="compare-div">${f2.division}</div>
+      <div class="compare-name">${f2.name}</div>
+      <div class="compare-div" style="color:var(--text3)">${f2.record}</div>
+      <div class="compare-ois-big">${f2.ois}</div>
+      <div style="font-family:var(--mono);font-size:.6rem;color:var(--text3);text-transform:uppercase;letter-spacing:.1em">OIS</div>
+    </div>`;
+
+  // Stats
+  const stats = [
+    { key:'ois', label:'Overall OIS', cls:'ois' },
+    { key:'str', label:'Striking Impact', cls:'str' },
+    { key:'wre', label:'Wrestling Impact', cls:'wre' },
+    { key:'gnd', label:'Ground Impact', cls:'gnd' },
+  ];
+  document.getElementById('compareStats').innerHTML = stats.map(s => {
+    const w = winner(s.key);
+    const max = Math.max(f1[s.key], f2[s.key], 1);
+    return `
+      <div class="compare-stat-row">
+        <div class="compare-stat-val left ${w==='left'?'winner':''}">${f1[s.key]}</div>
+        <div class="compare-stat-label">${s.label}</div>
+        <div class="compare-stat-val right ${w==='right'?'winner':''}">${f2[s.key]}</div>
+      </div>
+      <div class="compare-bar-row">
+        <div class="compare-mini-bar compare-left-bar"><div class="compare-mini-fill ${s.cls}" style="width:${Math.round(f1[s.key]/max*100)}%"></div></div>
+        <div></div>
+        <div class="compare-mini-bar"><div class="compare-mini-fill ${s.cls}" style="width:${Math.round(f2[s.key]/max*100)}%"></div></div>
+      </div>`;
+  }).join('');
+
+  document.getElementById('compareModal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+
+  setTimeout(() => {
+    makeRadar('compareRadar', [f1, f2], null);
+    makeTrend('compareTrend', [f1, f2]);
+  }, 50);
+}
+
+// ══════════════════════════════════════════════════════════════
+// FIGHTER MODAL
+// ══════════════════════════════════════════════════════════════
+function openFighterModal(id) {
+  const f = FIGHTERS.find(x => x.id === id);
+  if (!f) return;
+
+  document.getElementById('modalFighterName').textContent = f.name;
+  document.getElementById('modalDivision').textContent = `${f.division} · ${f.record}`;
+  document.getElementById('modalOIS').textContent = f.ois;
+  document.getElementById('modalSTR').textContent = f.str;
+  document.getElementById('modalWRE').textContent = f.wre;
+  document.getElementById('modalGND').textContent = f.gnd;
+  document.getElementById('modalInsight').textContent = f.insight;
+
+  // Fight history table
+  const fights = f.fights || [];
+  document.getElementById('fightHistoryBody').innerHTML = fights.length ? fights.map(fi => `
+    <tr>
+      <td style="color:var(--text)">${fi.opponent}</td>
+      <td>${fi.event}</td>
+      <td style="font-family:var(--mono);font-size:.75rem">${fi.date}</td>
+      <td class="fight-result-${fi.result.toLowerCase()}">${fi.result}</td>
+      <td>${fi.method}</td>
+      <td class="fight-ois">${fi.ois}</td>
+      <td class="td-score" style="color:var(--red-glow)">${fi.str}</td>
+      <td class="td-score" style="color:var(--gold)">${fi.wre}</td>
+      <td class="td-score" style="color:var(--cyan)">${fi.gnd}</td>
+    </tr>`).join('')
+    : `<tr><td colspan="9" style="color:var(--text3);font-family:var(--mono);font-size:.75rem;padding:.8rem .6rem">No fight history available.</td></tr>`;
+
+  document.getElementById('fighterModal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+
+  setTimeout(() => {
+    makeRadar('modalRadar', [f], [72,68,65,78]);
+    makeTrend('modalTrend', [f]);
+  }, 50);
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+// ══════════════════════════════════════════════════════════════
+// METHODOLOGY CHARTS
+// ══════════════════════════════════════════════════════════════
+function buildMethodCharts() {
+  const islam = FIGHTERS.find(f => f.name.includes('Makhachev')) || FIGHTERS[0];
+  if (islam) makeRadar('methodRadar', [islam], [68,65,60,74]);
+
+  const lw = FIGHTERS.filter(f => f.division === 'Lightweight').slice(0,4);
+  if (lw.length) {
+    const all = [...lw, { name:'Div. Avg', ois:74 }];
+    destroyChart('methodBar');
+    new Chart(document.getElementById('methodBar'), {
+      type: 'bar',
+      data: {
+        labels: all.map(f => f.name.split(' ').pop()),
+        datasets: [{
+          data: all.map(f => f.ois),
+          backgroundColor: ['#e01535','rgba(192,18,44,.5)','rgba(192,18,44,.3)','rgba(192,18,44,.2)','rgba(0,212,255,.3)'],
+          borderColor: ['#e01535','rgba(192,18,44,.8)','rgba(192,18,44,.5)','rgba(192,18,44,.4)','rgba(0,212,255,.6)'],
+          borderWidth: 1, borderRadius: 2,
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        scales: {
+          y: { min:60, max:100, ticks:{color:'#5a6170',font:{size:10}}, grid:{color:'rgba(255,255,255,0.05)'} },
+          x: { ticks:{color:'#9aa0aa',font:{size:11}}, grid:{display:false} }
+        },
+        plugins: { legend:{display:false} }
+      }
+    });
+  }
+}
+
+function buildValidationChart() {
+  destroyChart('validationChart');
+  new Chart(document.getElementById('validationChart'), {
+    type: 'line',
+    data: {
+      labels: ["Q1 '23","Q2 '23","Q3 '23","Q4 '23","Q1 '24","Q2 '24","Q3 '24","Q4 '24"],
+      datasets: [{
+        data: [61,64,67,69,72,74,76,78],
+        borderColor: '#00d4ff',
+        backgroundColor: 'rgba(0,212,255,0.06)',
+        fill: true, tension: 0.4,
+        pointBackgroundColor: '#00d4ff', pointRadius: 3,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      scales: {
+        x: { ticks:{color:'#5a6170',font:{size:9}}, grid:{display:false} },
+        y: { min:50, max:90, ticks:{color:'#5a6170',font:{size:9},callback:v=>v+'%'}, grid:{color:'rgba(255,255,255,0.05)'} }
+      },
+      plugins: { legend:{display:false} }
+    }
+  });
+}
+
+// ══════════════════════════════════════════════════════════════
+// SCROLL / NAV
+// ══════════════════════════════════════════════════════════════
+function initScrollAnim() {
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+  }, { threshold: 0.1 });
+  document.querySelectorAll('.fade-in').forEach(el => obs.observe(el));
+}
+
+function initNavScroll() {
+  const sections = ['home','methodology','reports','database','about'];
+  window.addEventListener('scroll', () => {
+    const y = window.scrollY + 80;
+    let current = 'home';
+    sections.forEach(id => { const el = document.getElementById(id); if (el && el.offsetTop <= y) current = id; });
+    document.querySelectorAll('.nav-links a').forEach(a => {
+      a.classList.toggle('active', a.getAttribute('href') === '#' + current);
+    });
+  });
+}
+
+// Close modals on overlay click or Escape
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(overlay.id); });
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    closeModal('fighterModal');
+    closeModal('compareModal');
+  }
+  if (e.key === 'Enter' && document.activeElement.getAttribute('role') === 'button') {
+    document.activeElement.click();
+  }
+});
+
+// ══════════════════════════════════════════════════════════════
+// BOOT
+// ══════════════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', loadFighters);
+</script>
+</body>
+</html>
